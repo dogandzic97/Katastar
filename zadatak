@@ -1,0 +1,207 @@
+   <Window.Resources>
+        <DataTemplate x:Key="prikazOpstina">
+            <StackPanel Orientation="Horizontal" Margin="7">
+                <TextBlock Text="{Binding Naziv}"/>
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+    <Grid>
+        <Menu HorizontalAlignment="Left" Height="21" VerticalAlignment="Top" Width="106">
+            <MenuItem Header="Rad sa objektima" Height="21" Width="106">
+                <MenuItem Header="Unos novog objekta" x:Name="UnesiNovi" Click="UnesiNovi_Click"/>
+            </MenuItem>
+        </Menu>
+        <DataGrid x:Name="mojGrid" HorizontalAlignment="Left" Height="228" Margin="48,74,0,0" AutoGenerateColumns="False" VerticalAlignment="Top" Width="379" LoadingRowDetails="MojGrid_LoadingRowDetails">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Brisanje objekta" x:Name="obrisiObjekat" Click="ObrisiObjekat_Click"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Sifra parcele" Binding="{Binding IDParcele}"/>
+                <DataGridTextColumn Header="Povrsina (u arima)" Binding="{Binding Povrsina}"/>
+                <DataGridTextColumn Header="Vlasnistvo" Binding="{Binding Vlasnistvo}"/>
+                <DataGridTextColumn Header="Adresa" Binding="{Binding Adresa}"/>
+            </DataGrid.Columns>
+            <DataGrid.RowDetailsTemplate>
+                <DataTemplate>
+                    <Border BorderThickness="0" Padding="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Sifra objekta"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding IDObjekta}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Vlasnik"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Vlasnik}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Kvadratura"/>
+                            <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding Kvadratura}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Uknjizeno"/>
+                            <CheckBox Grid.Row="1" Grid.Column="3" IsChecked="{Binding Uknjizeno}"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </DataGrid.RowDetailsTemplate>
+        </DataGrid>
+        <GroupBox x:Name="gbPromeneVlasnistva" Header="Promena vlasnistva parcele" HorizontalAlignment="Left" Height="228" Margin="505,74,0,0" VerticalAlignment="Top" Width="246">
+            <Grid HorizontalAlignment="Left" Height="208" Margin="10,10,-2.4,-11.6" VerticalAlignment="Top" Width="226">
+                <GroupBox x:Name="gbVlasnistvo" Header="Vlasnistvo" HorizontalAlignment="Left" Height="100" Margin="18,52,0,0" VerticalAlignment="Top" Width="198">
+                    <Grid x:Name="gridVlasnistvo" HorizontalAlignment="Left" Height="78" Margin="10,0,-2.4,0" VerticalAlignment="Top" Width="178">
+                        <RadioButton x:Name="rbPRivatno" Content="Privatno" HorizontalAlignment="Left" Margin="40,10,0,0" VerticalAlignment="Top"/>
+                        <RadioButton x:Name="rbDrzavno" Content="Drzavno" HorizontalAlignment="Left" Margin="40,31,0,0" VerticalAlignment="Top"/>
+                        <RadioButton x:Name="rbNaKoriscenje" Content="Na koriscenje" HorizontalAlignment="Left" Margin="40,53,0,0" VerticalAlignment="Top"/>
+                    </Grid>
+                </GroupBox>
+                <TextBlock HorizontalAlignment="Left" Margin="18,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top"><Run Text="Sifra par"/><Run Text="ce"/><Run Text="le"/></TextBlock>
+                <TextBox x:Name="tbSifraParcele" HorizontalAlignment="Left" Height="23" Margin="96,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                <Button x:Name="btnIzmeni" Content="Izmeni" HorizontalAlignment="Left" Margin="75,170,0,0" VerticalAlignment="Top" Width="75" Click="BtnIzmeni_Click"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox x:Name="gbNeuknjizeno" Header="Neuknjizeno" HorizontalAlignment="Left" Height="64" Margin="48,331,0,0" VerticalAlignment="Top" Width="419">
+            <Grid HorizontalAlignment="Left" Height="34" Margin="0,10,-1.8,-2.4" VerticalAlignment="Top" Width="409">
+                <TextBlock HorizontalAlignment="Left" Margin="10,3,0,0" TextWrapping="Wrap" Text="Broj neuknjizenih objekata na itabranoj katastarskoj opstini je" VerticalAlignment="Top" Width="327" Height="23"/>
+                <TextBox x:Name="tbNeuknjizeno" HorizontalAlignment="Left" Height="23" Margin="342,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="46"/>
+            </Grid>
+        </GroupBox>
+        <ComboBox x:Name="cmbOpstine" ItemTemplate="{StaticResource prikazOpstina}"  HorizontalAlignment="Left" Margin="206,33,0,0" VerticalAlignment="Top" Width="120" SelectionChanged="CmbOpstine_SelectionChanged"/>
+        <TextBlock HorizontalAlignment="Left" Margin="84,36,0,0" TextWrapping="Wrap" Text="Katastarska opstina" VerticalAlignment="Top"/>
+        
+        ////////
+        
+        namespace Katastar
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        KatastarDataClassesDataContext db = new KatastarDataClassesDataContext();
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            puniOpstine();
+        }
+
+        void puniOpstine()
+        {
+            var opstine = from o in db.KatastarskeOpstines
+                          select o;
+
+            cmbOpstine.ItemsSource = opstine;
+        }
+
+        void puniGrid()
+        {
+            var parcele = from p in db.Parceles
+                          where p.IDKatOpstina == ((KatastarskeOpstine)cmbOpstine.SelectedValue).IDKatOpstina
+                          select p;
+
+            mojGrid.ItemsSource = parcele;
+        }
+
+        private void CmbOpstine_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            puniGrid();
+
+            var neuknjizeno = (from n in db.Objektis
+                               where n.IDKatOpstina == (Q(KatastarskeOpstine)cmbOpstine.SelectedValue).IDKatOpstina
+                               select n.Uknjizeno).Count();
+
+            tbNeuknjizeno.Text = neuknjizeno.ToString();
+        }
+
+        private void MojGrid_LoadingRowDetails(object sender, DataGridRowDetailsEventArgs e)
+        {
+            Objekti objekat = (from o in db.Objektis
+                               where o.IDParcele == ((Parcele)mojGrid.SelectedValue).IDParcele
+                               select o).FirstOrDefault();
+
+            if(objekat != null)
+            {
+                TextBox tb1 = e.DetailsElement.FindName("txtIDObjekta") as TextBox;
+                tb1.Text = objekat.IDObjekta.ToString();
+                TextBox tb2 = e.DetailsElement.FindName("txtVlasnik") as TextBox;
+                tb1.Text = objekat.IDObjekta.ToString();
+                TextBox tb3 = e.DetailsElement.FindName("txtKvadratura") as TextBox;
+                tb1.Text = objekat.IDObjekta.ToString();
+                CheckBox cb = e.DetailsElement.FindName("cbUknjizeno") as CheckBox;
+                cb.IsChecked = objekat.Uknjizeno;
+            }
+        }
+
+        private string vratiVlasnistvo()
+        {
+            string pom = "";
+            foreach(RadioButton rb in gridVlasnistvo.Children)
+            {
+                if(rb.IsChecked == true)
+                {
+                    pom = rb.Content.ToString();
+                }
+            }
+
+            return pom;
+        }
+
+        private void BtnIzmeni_Click(object sender, RoutedEventArgs e)
+        {
+            string vlasnistvo = vratiVlasnistvo();
+
+            if(!String.IsNullOrEmpty(cmbOpstine.Text) && !String.IsNullOrEmpty(tbSifraParcele.Text))
+            {
+                Parcele sifra = (from s in db.Parceles
+                                 where s.IDKatOpstina == ((KatastarskeOpstine)cmbOpstine.SelectedValue).IDKatOpstina
+                                 select s).FirstOrDefault();
+
+                sifra.Vlasnistvo = vlasnistvo;
+
+                try
+                {
+                    db.SubmitChanges();
+                    MessageBox.Show("Vlasnistvo parcele pod sifrom " + sifra.IDParcele + " u katastarskoj opstini " + sifra.KatastarskeOpstine.Naziv + " je uspesno izmenjen u bazi.", "Potvrda", MessageBoxButton.OK);
+                    puniGrid();
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show("Greska prilikom promene vlasnistva!" + ex);
+                }
+            }
+        }
+
+        private void ObrisiObjekat_Click(object sender, RoutedEventArgs e)
+        {
+            Objekti objekat = (from o in db.Objektis
+                               where o.IDParcele == ((Parcele)mojGrid.SelectedValue).IDParcele
+                               select o).Single();
+
+            try
+            {
+                MessageBoxResult rez = MessageBox.Show("Da li si siguran da zelis da izbrises objekat?", "Potvrda brisanja", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if(rez == MessageBoxResult.Yes)
+                {
+                    db.Objektis.DeleteOnSubmit(objekat);
+                    db.SubmitChanges();
+                    MessageBox.Show("Uspesno ste obrisali zeljeni objekat", "Potvrda", MessageBoxButton.OK);
+                    puniGrid();
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show("Greska prilikom brisanja objekta!" + ex);
+            }
+        }
+
+        private void UnesiNovi_Click(object sender, RoutedEventArgs e)
+        {
+            UnosNovog nov = new UnosNovog();
+            nov.ShowDialog();
+            puniGrid();
+        }
